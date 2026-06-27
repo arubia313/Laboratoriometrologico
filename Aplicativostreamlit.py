@@ -167,14 +167,23 @@ with col_h2:
             pdf.set_font("Helvetica", "", 9)
             anomalias = [
                 "ANOMALIA 1 - TC-201: Deriva critica. Cpk caiu de 3.44 para 0.68 (VERMELHO). Vies crescente.",
-                "ANOMALIA 2 - BAL-101/PAD-MASS-01: Rastreabilidade invalida. Viola ISO 17025 par. 6.5.",
-                "ANOMALIA 3 - TRQ-801: Deriva leve preventiva. Monotonica, dentro de +-T.",
-                "ANOMALIA 4 - Datas: Certificados PDF vs CSV. Divergencia nas datas de registros. Viola ISO 17025 par. 7.5.",
+                "ANOMALIA 2 - BAL-101 / PAD-MASS-01: Rastreabilidade invalida. Viola os requisitos da norma ISO 17025.",
+                "ANOMALIA 3 - TRQ-801: Deriva leve preventiva. Monotonica, dentro dos limites aceitaveis.",
+                "ANOMALIA 4 - Divergencia de Datas: Conflito entre os registros dos certificados PDF e as tabelas CSV.",
             ]
             for a in anomalias:
                 txt_anom = f" * {a}"
                 txt_anom = txt_anom.encode('latin-1', 'ignore').decode('latin-1')
                 pdf.multi_cell(180, 6, txt_anom)
+            pdf.ln(5)
+            
+            # --- Seção 6: Referências Normativas ---
+            pdf.set_font("Helvetica", "B", 11)
+            pdf.cell(0, 8, "6. Referencias Tecnicas e Normativas", ln=True)
+            pdf.set_font("Helvetica", "I", 9)
+            ref_texto = "Fontes de referencia utilizadas: AIAG MSA 4a ed. - ISO 5725-2 - GUM/JCGM 100:2008 par. 4.2 (Avaliacao de Incerteza do Tipo A)."
+            ref_texto = ref_texto.encode('latin-1', 'ignore').decode('latin-1')
+            pdf.multi_cell(180, 6, ref_texto)
                 
             pdf_bytes = pdf.output()
         
