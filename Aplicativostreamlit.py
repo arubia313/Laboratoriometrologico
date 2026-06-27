@@ -171,9 +171,14 @@ with col_h2:
                 pdf.multi_cell(180, 6, f" * {a}")
                 
             pdf_bytes = pdf.output()
-            st.download_button("📄 Salvar PDF", data=bytes(pdf_bytes),
-                               file_name="relatorio_metrologico_camabier.pdf",
-                               mime="application/pdf", use_container_width=True)
+        
+            st.download_button(
+                label="📄 Salvar PDF",
+                data=bytes(pdf_bytes),
+                file_name="relatorio_metrologico_camabier.pdf",
+                mime="application/pdf",
+                use_container_width=True
+            )
         except ImportError:
             st.error("Instale fpdf2: pip install fpdf2")
                                file_name="relatorio_metrologico_camabier.pdf",
