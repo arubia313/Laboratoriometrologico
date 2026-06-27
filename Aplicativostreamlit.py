@@ -127,7 +127,7 @@ with col_h2:
                 "ANOMALIA 4 - Datas: Certificados PDF (15/04/2026) vs CSV (mar/2026). Viola ISO 17025 §7.5.",
             ]
             for a in anomalias:
-            pdf.multi_cell(180, 7, f" {a}")
+                pdf.multi_cell(180, 7, f" {a}")
             pdf_bytes = pdf.output()
             st.download_button("📄 Salvar PDF", data=bytes(pdf_bytes),
                                file_name="relatorio_metrologico_camabier.pdf",
