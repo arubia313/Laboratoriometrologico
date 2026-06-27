@@ -302,7 +302,7 @@ with tab2:
         rows_tbl.append({
             "Instrumento": row["ID"],
             "Grandeza": inst_info["Grandeza"],
-            "Cp": f'{row["Cp"]:.2f}',
+            "Cp": f'{row["Cp"]:.2f}' if pd.notna(row.get("Cp")) and row["Cp"] is not None else "—",
             "Cpk": f'{row["Cpk"]:.2f}',
             "Pp": f'{row["Pp"]:.2f}' if pd.notna(row.get("Pp")) else "—",
             "Ppk": f'{row["Ppk"]:.2f}' if pd.notna(row.get("Ppk")) else "—",
