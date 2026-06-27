@@ -90,9 +90,8 @@ with col_h1:
     st.markdown('<p class="page-title">📊 Dashboard Metrológica — Laboratório CamaBier S.A.</p>', unsafe_allow_html=True)
     st.markdown('<p class="section-label">Sistema metrológico integrado · 12 instrumentos · 5 calibrações · 600 registros</p>', unsafe_allow_html=True)
 with col_h2:
-    # Req. 6 — Exportação PDF (via download do HTML da página)
     st.markdown("**Exportar relatório**")
-    if st.button("⬇ Download PDF", use_container_width=True, help="Exporta um relatório PDF com todos os painéis visíveis"):
+    if st.button("⬇ Download PDF", use_container_width=True, help="Exporta um relatorio PDF com todos os paineis visiveis"):
         try:
             from fpdf import FPDF
             import math
@@ -113,14 +112,15 @@ with col_h2:
             pdf.cell(0, 8, f"1. Resumo de Capacidade (Calibracao {cal_sel})", ln=True)
             pdf.set_font("Helvetica", "", 9)
             
-            # Buscando os mesmos dados da aba 2 (Filtrados)
             der_cal_pdf = d.DERIVA[d.DERIVA["Cal"] == cal_sel].copy()
             der_cal_pdf = der_cal_pdf[der_cal_pdf["ID"].isin(df_inst["ID"])]
             der_cal_pdf = der_cal_pdf.merge(d.CAPACIDADE[["ID","Cp","Pp","Ppk"]], on="ID", how="left")
             
             for _, row in der_cal_pdf.iterrows():
                 cp_val = f"{row['Cp']:.2f}" if pd.notna(row.get('Cp')) and row['Cp'] is not None else "—"
-                pdf.cell(0, 6, f"  {row['ID']}: Cp = {cp_val} | Cpk = {row['Cpk']:.2f} [{row['Semaforo']}]", ln=True)
+                txt_cap = f"  {row['ID']}: Cp = {cp_val} | Cpk = {row['Cpk']:.2f} [{row['Semaforo']}]"
+                txt_cap = txt_cap.encode('latin-1', 'ignore').decode('latin-1')
+                pdf.cell(0, 6, txt_cap, ln=True)
             pdf.ln(4)
             
             # --- Seção 2: Validade de Calibração (Dados Filtrados) ---
@@ -129,7 +129,9 @@ with col_h2:
             pdf.set_font("Helvetica", "", 9)
             for _, row in df_val.iterrows():
                 prox = row["proxima_cal"].strftime("%d/%m/%Y")
-                pdf.cell(0, 6, f"  {row['ID']}: proxima calibrao em {prox} | Dias rest.: {int(row['dias_restantes'])} [{row['status']}]", ln=True)
+                txt_val = f"  {row['ID']}: proxima calibracao em {prox} | Dias rest.: {int(row['dias_restantes'])} [{row['status']}]"
+                txt_val = txt_val.encode('latin-1', 'ignore').decode('latin-1')
+                pdf.cell(0, 6, txt_val, ln=True)
             pdf.ln(4)
             
             # --- Seção 3: Incerteza Expandida Dinâmica ---
@@ -143,7 +145,9 @@ with col_h2:
                 uB2 = (row_i["Resolucao"] / 2) / math.sqrt(3)
                 uc = math.sqrt(uA**2 + uB1**2 + uB2**2)
                 U = 2 * uc
-                pdf.cell(0, 6, f"  {row_i['ID']}: uA={uA:.4f} | uB_pad={uB1:.4f} | uc={uc:.4f} | U(k=2)={U:.4f} {row_i['Unid']}", ln=True)
+                txt_inc = f"  {row_i['ID']}: uA={uA:.4f} | uB_pad={uB1:.4f} | uc={uc:.4f} | U(k=2)={U:.4f} {row_i['Unid']}"
+                txt_inc = txt_inc.encode('latin-1', 'ignore').decode('latin-1')
+                pdf.cell(0, 6, txt_inc, ln=True)
             pdf.ln(4)
             
             # --- Seção 4: Repetibilidade MSA Dinâmica ---
@@ -152,7 +156,9 @@ with col_h2:
             pdf.set_font("Helvetica", "", 9)
             df_msa_filt = d.MSA[d.MSA["ID"].isin(df_inst["ID"])]
             for _, row_m in df_msa_filt.iterrows():
-                pdf.cell(0, 6, f"  {row_m['ID']}: EV={row_m['EV']:.5f} | Razao P/T={row_m['PT_ratio']*100:.1f}%", ln=True)
+                txt_msa = f"  {row_m['ID']}: EV={row_m['EV']:.5f} | Razao P/T={row_m['PT_ratio']*100:.1f}%"
+                txt_msa = txt_msa.encode('latin-1', 'ignore').decode('latin-1')
+                pdf.cell(0, 6, txt_msa, ln=True)
             pdf.ln(5)
             
             # --- Seção 5: Anomalias ---
@@ -160,18 +166,25 @@ with col_h2:
             pdf.cell(0, 8, "5. Anomalias e Analises Identificadas", ln=True)
             pdf.set_font("Helvetica", "", 9)
             anomalias = [
-                "ANOMALIA 1 - TC-201: Deriva critica. Cpk caiu de 3,44 para 0,68 (VERMELHO). Vies crescente.",
-                "ANOMALIA 2 - BAL-101/PAD-MASS-01: Rastreabilidade invalida. Viola ISO 17025 $6.5.",
+                "ANOMALIA 1 - TC-201: Deriva critica. Cpk caiu de 3.44 para 0.68 (VERMELHO). Vies crescente.",
+                "ANOMALIA 2 - BAL-101/PAD-MASS-01: Rastreabilidade invalida. Viola ISO 17025 par. 6.5.",
                 "ANOMALIA 3 - TRQ-801: Deriva leve preventiva. Monotonica, dentro de +-T.",
-                "ANOMALIA 4 - Datas: Certificados PDF vs CSV. Divergencia nas datas de registros. Viola ISO 17025 $7.5.",
+                "ANOMALIA 4 - Datas: Certificados PDF vs CSV. Divergencia nas datas de registros. Viola ISO 17025 par. 7.5.",
             ]
             for a in anomalias:
-                pdf.multi_cell(180, 6, f" * {a}")
+                txt_anom = f" * {a}"
+                txt_anom = txt_anom.encode('latin-1', 'ignore').decode('latin-1')
+                pdf.multi_cell(180, 6, txt_anom)
                 
             pdf_bytes = pdf.output()
-            st.download_button("📄 Salvar PDF", data=bytes(pdf_bytes),
-                               file_name="relatorio_metrologico_camabier.pdf",
-                               mime="application/pdf", use_container_width=True)
+        
+            st.download_button(
+                label="📄 Salvar PDF",
+                data=bytes(pdf_bytes),
+                file_name="relatorio_metrologico_camabier.pdf",
+                mime="application/pdf",
+                use_container_width=True
+            )
         except ImportError:
             st.error("Instale fpdf2: pip install fpdf2")
             
