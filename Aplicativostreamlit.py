@@ -92,7 +92,7 @@ with col_h1:
 with col_h2:
     # Req. 6 — Exportação PDF (via download do HTML da página)
     st.markdown("**Exportar relatório**")
-   if st.button("⬇ Download PDF", use_container_width=True, help="Exporta um relatório PDF com todos os painéis visíveis"):
+    if st.button("⬇ Download PDF", use_container_width=True, help="Exporta um relatório PDF com todos os painéis visíveis"):
         try:
             from fpdf import FPDF
             import math
