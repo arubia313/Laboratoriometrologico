@@ -94,42 +94,88 @@ with col_h2:
     st.markdown("**Exportar relatório**")
     if st.button("⬇ Download PDF", use_container_width=True, help="Exporta um relatório PDF com todos os painéis visíveis"):
         try:
+           if st.button("⬇ Download PDF", use_container_width=True, help="Exporta um relatório PDF com todos os painéis visíveis"):
+        try:
             from fpdf import FPDF
+            import math
             pdf = FPDF()
             pdf.add_page()
+            
+            # --- Cabeçalho do Relatório ---
             pdf.set_font("Helvetica", "B", 14)
             pdf.cell(0, 10, "Dashboard Metrologica - CamaBier S.A.", ln=True)
             pdf.set_font("Helvetica", "", 10)
-            pdf.cell(0, 8, f"ENG207 - Metrologia Industrial - UFBA - Equipe 4", ln=True)
-            pdf.cell(0, 8, f"Data de emissao: {d.TODAY.strftime('%d/%m/%Y')}", ln=True)
-            pdf.ln(4)
+            pdf.cell(0, 6, "ENG207 - Metrologia Industrial - UFBA - Equipe 4", ln=True)
+            pdf.cell(0, 6, f"Data de emissao: {d.TODAY.strftime('%d/%m/%Y')}", ln=True)
+            pdf.cell(0, 6, f"Filtro aplicado: Etapa: {etapa_sel} | Calibracao Selecionada: {cal_sel}", ln=True)
+            pdf.ln(5)
+            
+            # --- Seção 1: Capacidade (Dados Filtrados) ---
             pdf.set_font("Helvetica", "B", 11)
-            pdf.cell(0, 8, "Resumo de capacidade (Cal. 5)", ln=True)
+            pdf.cell(0, 8, f"1. Resumo de Capacidade (Calibracao {cal_sel})", ln=True)
             pdf.set_font("Helvetica", "", 9)
-            cap5 = d.DERIVA[d.DERIVA["Cal"] == 5][["ID","Cpk","Semaforo"]]
-            for _, row in cap5.iterrows():
-                pdf.cell(0, 7, f"  {row['ID']}: Cpk = {row['Cpk']:.2f}  [{row['Semaforo']}]", ln=True)
+            
+            # Buscando os mesmos dados da aba 2 (Filtrados)
+            der_cal_pdf = d.DERIVA[d.DERIVA["Cal"] == cal_sel].copy()
+            der_cal_pdf = der_cal_pdf[der_cal_pdf["ID"].isin(df_inst["ID"])]
+            der_cal_pdf = der_cal_pdf.merge(d.CAPACIDADE[["ID","Cp","Pp","Ppk"]], on="ID", how="left")
+            
+            for _, row in der_cal_pdf.iterrows():
+                cp_val = f"{row['Cp']:.2f}" if pd.notna(row.get('Cp')) and row['Cp'] is not None else "—"
+                pdf.cell(0, 6, f"  {row['ID']}: Cp = {cp_val} | Cpk = {row['Cpk']:.2f} [{row['Semaforo']}]", ln=True)
             pdf.ln(4)
+            
+            # --- Seção 2: Validade de Calibração (Dados Filtrados) ---
             pdf.set_font("Helvetica", "B", 11)
-            pdf.cell(0, 8, "Status de validade de calibracao", ln=True)
+            pdf.cell(0, 8, "2. Status de Validade de Calibracao", ln=True)
             pdf.set_font("Helvetica", "", 9)
-            for _, row in d.VALIDADE.iterrows():
+            for _, row in df_val.iterrows():
                 prox = row["proxima_cal"].strftime("%d/%m/%Y")
-                pdf.cell(0, 7, f"  {row['ID']}: proxima {prox}  [{row['status']}]", ln=True)
+                pdf.cell(0, 6, f"  {row['ID']}: proxima calibrao em {prox} | Dias rest.: {int(row['dias_restantes'])} [{row['status']}]", ln=True)
             pdf.ln(4)
+            
+            # --- Seção 3: Incerteza Expandida Dinâmica ---
             pdf.set_font("Helvetica", "B", 11)
-            pdf.cell(0, 8, "Anomalias identificadas", ln=True)
+            pdf.cell(0, 8, "3. Balanco de Incerteza Expandida U (k=2)", ln=True)
+            pdf.set_font("Helvetica", "", 9)
+            df_inc_filt = d.INCERTEZA[d.INCERTEZA["ID"].isin(df_inst["ID"])]
+            for _, row_i in df_inc_filt.iterrows():
+                uA = row_i["s_cal5"] / math.sqrt(10)
+                uB1 = row_i["U_pad"] / 2
+                uB2 = (row_i["Resolucao"] / 2) / math.sqrt(3)
+                uc = math.sqrt(uA**2 + uB1**2 + uB2**2)
+                U = 2 * uc
+                pdf.cell(0, 6, f"  {row_i['ID']}: uA={uA:.4f} | uB_pad={uB1:.4f} | uc={uc:.4f} | U(k=2)={U:.4f} {row_i['Unid']}", ln=True)
+            pdf.ln(4)
+            
+            # --- Seção 4: Repetibilidade MSA Dinâmica ---
+            pdf.set_font("Helvetica", "B", 11)
+            pdf.cell(0, 8, "4. Repetibilidade - Estudo MSA (Variacao do Equipamento)", ln=True)
+            pdf.set_font("Helvetica", "", 9)
+            df_msa_filt = d.MSA[d.MSA["ID"].isin(df_inst["ID"])]
+            for _, row_m in df_msa_filt.iterrows():
+                pdf.cell(0, 6, f"  {row_m['ID']}: EV={row_m['EV']:.5f} | Razao P/T={row_m['PT_ratio']*100:.1f}%", ln=True)
+            pdf.ln(5)
+            
+            # --- Seção 5: Anomalias ---
+            pdf.set_font("Helvetica", "B", 11)
+            pdf.cell(0, 8, "5. Anomalias e Analises Identificadas", ln=True)
             pdf.set_font("Helvetica", "", 9)
             anomalias = [
-                "ANOMALIA 1 - TC-201: Deriva critica. Cpk caiu de 3,44 para 0,68 (VERMELHO). Viés crescente.",
-                "ANOMALIA 2 - BAL-101/PAD-MASS-01: Rastreabilidade invalida. Viola ISO 17025 §6.5.",
-                "ANOMALIA 3 - TRQ-801: Deriva leve preventiva. Monotonica, dentro de ±T.",
-                "ANOMALIA 4 - Datas: Certificados PDF (15/04/2026) vs CSV (mar/2026). Viola ISO 17025 §7.5.",
+                "ANOMALIA 1 - TC-201: Deriva critica. Cpk caiu de 3,44 para 0,68 (VERMELHO). Vies crescente.",
+                "ANOMALIA 2 - BAL-101/PAD-MASS-01: Rastreabilidade invalida. Viola ISO 17025 $6.5.",
+                "ANOMALIA 3 - TRQ-801: Deriva leve preventiva. Monotonica, dentro de +-T.",
+                "ANOMALIA 4 - Datas: Certificados PDF vs CSV. Divergencia nas datas de registros. Viola ISO 17025 $7.5.",
             ]
             for a in anomalias:
-                pdf.multi_cell(180, 7, f" {a}")
+                pdf.multi_cell(180, 6, f" * {a}")
+                
             pdf_bytes = pdf.output()
             st.download_button("📄 Salvar PDF", data=bytes(pdf_bytes),
+                               file_name="relatorio_metrologico_camabier.pdf",
+                               mime="application/pdf", use_container_width=True)
+        except ImportError:
+            st.error("Instale fpdf2: pip install fpdf2")
                                file_name="relatorio_metrologico_camabier.pdf",
                                mime="application/pdf", use_container_width=True)
         except ImportError:
