@@ -438,33 +438,39 @@ with tab3:
 # ════════════════════════════════════════════════════════════════════════════
 # TAB 4 — Incerteza Expandida U (k=2) (Req. 4)
 # ════════════════════════════════════════════════════════════════════════════
+# --- CÓDIGO CORRIGIDO ---
+
 with tab4:
     st.markdown("#### Incerteza expandida U (k = 2) — balanço por instrumento")
     st.caption("u_A = s/√10 (Tipo A) · u_pad = U_pad/2 (Tipo B normal) · u_res = (res/2)/√3 (Tipo B retangular) · u_c = √(Σu²) · U = 2·u_c — GUM/JCGM 100:2008")
 
-    inst_inc = st.selectbox("Instrumento", df_inc["ID"].tolist(), key="inc_inst")
-    row_i = df_inc[df_inc["ID"] == inst_inc].iloc[0]
-    info_i = d.INSTRUMENTOS[d.INSTRUMENTOS["ID"] == inst_inc].iloc[0]
+    # Mantenha esta linha exatamente como está no seu código (imagem_00347d.png, linha 445)
+    lista_instrumentos = df_inc["ID"].tolist()
+    inst_inc = st.selectbox("Instrumento", lista_instrumentos, key="inc_inst")
 
-    import math
-    uA  = row_i["s_cal5"] / math.sqrt(10)
-    uB1 = row_i["U_pad"] / 2
-    uB2 = (row_i["Resolucao"] / 2) / math.sqrt(3)
-    uc  = math.sqrt(uA**2 + uB1**2 + uB2**2)
-    U   = 2 * uc
+    # === NOVO BLOCO DE PROTEÇÃO ===
+    # Verifica se a lista não está vazia e se um instrumento foi selecionado
+    if lista_instrumentos and inst_inc:
+        # Só agora tentamos acessar o índice [0], pois sabemos que há dados
+        # (imagem_00347d.png, linha 446 e 447)
+        row_i = df_inc[df_inc["ID"] == inst_inc].iloc[0]
+        info_i = d.INSTRUMENTOS[d.INSTRUMENTOS["ID"] == inst_inc].iloc[0]
 
-    ci1, ci2, ci3, ci4 = st.columns(4)
-    with ci1:
-        st.markdown(f'<div class="metric-card"><h4>u_A (Tipo A)</h4><p class="val" style="color:{COR_AZUL};font-size:1.4rem">{uA:.5f}</p><p class="sub">{row_i["Unid"]}</p></div>', unsafe_allow_html=True)
-    with ci2:
-        st.markdown(f'<div class="metric-card"><h4>u_B padrão (Tipo B)</h4><p class="val" style="color:{COR_AZUL};font-size:1.4rem">{uB1:.5f}</p><p class="sub">{row_i["Unid"]}</p></div>', unsafe_allow_html=True)
-    with ci3:
-        st.markdown(f'<div class="metric-card"><h4>u_c combinada</h4><p class="val" style="color:{COR_AZUL};font-size:1.4rem">{uc:.5f}</p><p class="sub">{row_i["Unid"]}</p></div>', unsafe_allow_html=True)
-    with ci4:
-        cor_u = COR_AZUL
-        st.markdown(f'<div class="metric-card"><h4>U expandida (k=2)</h4><p class="val" style="color:{cor_u};font-size:1.4rem">{U:.5f}</p><p class="sub">{row_i["Unid"]}</p></div>', unsafe_allow_html=True)
+        import math
+        
+        # Mantenha todo o seu código de cálculo exatamente como está (linhas 450-454), 
+        # mas certifique-se de que ele esteja INDENTADO (recuado) para dentro do 'if'.
+        uA = row_i["s_cal5"] / math.sqrt(10)
+        uB1 = row_i["U_pad"] / 2
+        uB2 = (row_i["Resolucao"] / 2) / math.sqrt(3)
+        uc = math.sqrt(uA**2 + uB1**2 + uB2**2)
+        U = 2 * uc
+        
+        # ... (todo o restante do seu código de plotagem ci1, ci2... fig4...)
 
-    st.markdown("")
+    else:
+        # Se a lista estiver vazia (campo bloqueado), mostra uma mensagem amigável
+        st.warning("Verifique se há dados de incerteza disponíveis ou se os filtros na barra lateral estão limpando os dados.")
 
     # Tabela de balanço
     st.markdown("##### Tabela de balanço de incerteza")
